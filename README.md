@@ -16,7 +16,6 @@ root/
 ├── notebooks/
 │   ├── Avenue_Anomaly_Detection.ipynb
 │   ├── ShanghaiTech_Overcrowding.ipynb
-│   └── Combined_Restructured.ipynb
 ├── assets/
 │   ├── avenue_pipeline.png
 │   └── csrnet_pipeline.png
