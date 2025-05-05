@@ -101,10 +101,10 @@ Go to: `http://localhost:8501`
 ## Architecture Overview
 
 ### ShanghaiTech Crowd Monitoring (CSRNet)
-![CSRNet Pipeline](assets/csrnet_pipeline.png)
+![CSRNet Pipeline](assets/diagram-shanghaitech.png)
 
 ### Avenue Anomaly Detection (YOLOv8 + ResNet18)
-![Avenue Pipeline](assets/avenue_pipeline.png)
+![Avenue Pipeline](assets/diagram-avenue.png)
 
 ---
 
