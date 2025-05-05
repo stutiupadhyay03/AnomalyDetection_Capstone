@@ -8,6 +8,14 @@ This repository contains an interactive Streamlit app for:
 
 ---
 
+## Motivation and Backgroud
+
+1. Traditional surveillance systems rely a lot on manual monitoring which at any given moment can cause a false alarm or inefficiency due to either fatigue or any other reason since it very much be cause by any human error. 
+2. In a world where home appliances have also become automated it is very much important to upgrade our surveillance systems with the changing times. 
+3. With this project we plan to proposing a solution that can deal with abnormal / anomalous situations such as overcrowding, sudden motion and unidentified objects.
+
+---
+
 ## Project Structure
 
 ```
