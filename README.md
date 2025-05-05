@@ -1,4 +1,3 @@
----
 
 # Real-Time Anomaly Detection and Crowd Monitoring
 
@@ -70,7 +69,7 @@ Go to: `http://localhost:8501`
 
 ---
 
-## 📊 Datasets Used
+## Datasets Used
 
 ### 1. ShanghaiTech Dataset
 
@@ -160,7 +159,7 @@ All scenes recorded from a static camera on a single pedestrian avenue in a cont
 
 ---
 
-## 🔧 Requirements
+## Requirements
 
 * torch
 * torchvision
@@ -232,5 +231,3 @@ See `requirements.txt` for full list of packages and versions.
 * *Abnormal Event Detection in Crowded Scenes Using Sparse Representation*
 
 ---
-
-Let me know if you'd like this directly added to your GitHub `README.md` or converted into a PDF as well.
