@@ -151,11 +151,11 @@ All scenes recorded from a static camera on a single pedestrian avenue in a cont
 
 ### ShanghaiTech Crowd Monitoring (CSRNet)
 
-![CSRNet Pipeline](assets/csrnet_pipeline.png)
+![CSRNet Pipeline](assets/diagram-shanghaitech.png)
 
 ### Avenue Anomaly Detection (YOLOv8 + ResNet18)
 
-![Avenue Pipeline](assets/avenue_pipeline.png)
+![Avenue Pipeline](assets/diagram-avenue.png)
 
 ---
 
