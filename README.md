@@ -133,8 +133,8 @@ See `requirements.txt` for full list. Major libraries:
 
 ## Developed By
 
-Stuti Upadhyay — UMBC | DATA 606 Capstone Project
-\n Lakshmi Tejaswini Chandra Pampana — UMBC | DATA 606 Capstone Project
+- Stuti Upadhyay — UMBC | DATA 606 Capstone Project
+- Lakshmi Tejaswini Chandra Pampana — UMBC | DATA 606 Capstone Project
 
 ---
 
