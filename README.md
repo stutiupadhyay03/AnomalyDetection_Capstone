@@ -234,7 +234,7 @@ Here's a well-structured and professional version of the **References** section 
 
 ## References
 
-```
+
 1. **A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection**
    Nomica Choudhry, Jemal Abawajy, Shamsul Huda, and Imran Rao
    Faculty of Science, Engineering and Built Environment, Deakin University, Australia
@@ -265,20 +265,9 @@ Here's a well-structured and professional version of the **References** section 
    Cewu Lu, Jianping Shi, Jiaya Jia
    The Chinese University of Hong Kong
    *Emails:* {cwlu, jpshi, leojia}@cse.cuhk.edu.hk
-```
-
----
-
-## 📖 Citation
-
-```bibtex
-@INPROCEEDINGS{liu2018ano_pred, 
-  author={W. Liu and W. Luo and D. Lian and S. Gao}, 
-  booktitle={2018 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 
-  title={Future Frame Prediction for Anomaly Detection -- A New Baseline}, 
-  year={2018} 
-}
-```
-
+   
+7. **Future Frame Prediction for Anomaly Detection -- A New Baseline**
+   W. Liu and W. Luo and D. Lian and S. Gao
+   
 
 ---
