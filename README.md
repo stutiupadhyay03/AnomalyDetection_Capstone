@@ -23,18 +23,22 @@ This project aims to develop an AI-powered system capable of automatically detec
 ```
 root/
 │
-├── app.py                              # Streamlit interface
-├── notebooks/
-│   ├── Avenue_Anomaly_Detection.ipynb  # Anomaly detection and classification
-│   ├── ShanghaiTech_Overcrowding.ipynb# Crowd counting and alerts
-│   └── Combined_Restructured.ipynb    # Unified notebook
-├── assets/
-│   ├── avenue_pipeline.png             # Architecture diagram (Avenue)
-│   └── csrnet_pipeline.png             # Architecture diagram (ShanghaiTech)
-├── README.md                           # Project documentation
-├── requirements.txt                    # All required Python libraries
-```
+├── app.py                               # Streamlit dashboard combining both modules
+├── notebooks/                           # Jupyter notebooks for each dataset
+│   ├── Avenue_Anomaly_Detection.ipynb   # YOLOv8 + ResNet18 for anomaly detection
+│   ├── ShanghaiTech_Overcrowding.ipynb  # CSRNet-based crowd estimation
+│
+├── assets/                              # Visual diagrams for architecture explanation
+│   ├── avenue_pipeline.png              # Anomaly detection pipeline (Avenue)
+│   └── csrnet_pipeline.png              # Crowd monitoring pipeline (ShanghaiTech)
+│
+├── references/                          # Supporting research papers in PDF format
+│   ├── *.pdf                            # Cited academic and technical papers
+│
+├── requirements.txt                     # All Python dependencies for local/app deployment
+├── README.md                            # Project overview and instructions
 
+```
 ---
 
 ## How to Run
@@ -224,18 +228,57 @@ Features:
 
 ---
 
+Here's a well-structured and professional version of the **References** section for your `README.md`, including all six sources you listed, properly formatted:
+
+---
+
 ## References
 
-* Liu, W., Luo, W., Lian, D., & Gao, S. *Future Frame Prediction for Anomaly Detection – A New Baseline*. IEEE CVPR, 2018.
+```
+1. **A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection**
+   Nomica Choudhry, Jemal Abawajy, Shamsul Huda, and Imran Rao
+   Faculty of Science, Engineering and Built Environment, Deakin University, Australia
+   Department of Computer Science, NUML, Pakistan
+   Blue Brackets Technologies, Islamabad, Pakistan
+   *Corresponding author:* [choudhryn@deakin.edu.au](mailto:choudhryn@deakin.edu.au)
 
-* *Anomaly Detection Based on Latent Feature Training in Surveillance Scenarios*
+2. **Anomaly Detection in Surveillance Videos Based on H265 and Deep Learning**
+   Zainab K. Abbas and Ayad A. Al-Ani
+   Department of Information and Communication Engineering, Al-Nahrain University, Baghdad, Iraq
+   *Published in:* International Journal of Advanced Technology and Engineering Exploration, Vol 9(92), 2022
+   *DOI:* 10.19101/IJATEE.2021.875907
 
-* *Spatiotemporal Anomaly Detection Using Deep Learning for Real-Time Video Surveillance*
+3. **Spatiotemporal Anomaly Detection Using Deep Learning for Real-Time Video Surveillance**
+   Rashmika Nawaratne, Daswin De Silva, Damminda Alahakoon, Xinghuo Yu
+   *Affiliations:* IEEE Members, Federation University Australia
 
-* *Anomaly Detection in Surveillance Videos Based on H.265 and Deep Learning*
+4. **Confidence Score: The Forgotten Dimension of Object Detection Performance Evaluation**
+   Simon Wenkel, Khaled Alhazmi, Tanel Liiv, Saud Alrshoud, Martin Simon
+   *Corresponding author:* [khazmi@kacst.edu.sa](mailto:khazmi@kacst.edu.sa)
+   *Affiliations:* Marduk Technologies, Saudi Arabia, KACST
 
-* *A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection*
+5. **Towards Better Confidence Estimation for Neural Models**
+   Vishal Thanvantri Vasudevan, Abhinav Sethy, Alireza Roshan Ghias
+   *Affiliations:* University of California, San Diego and Alexa AI, Amazon
 
-* *Abnormal Event Detection in Crowded Scenes Using Sparse Representation*
+6. **Abnormal Event Detection at 150 FPS in MATLAB**
+   Cewu Lu, Jianping Shi, Jiaya Jia
+   The Chinese University of Hong Kong
+   *Emails:* {cwlu, jpshi, leojia}@cse.cuhk.edu.hk
+```
+
+---
+
+## 📖 Citation
+
+```bibtex
+@INPROCEEDINGS{liu2018ano_pred, 
+  author={W. Liu and W. Luo and D. Lian and S. Gao}, 
+  booktitle={2018 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 
+  title={Future Frame Prediction for Anomaly Detection -- A New Baseline}, 
+  year={2018} 
+}
+```
+
 
 ---
