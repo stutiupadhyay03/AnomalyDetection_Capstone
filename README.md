@@ -169,20 +169,18 @@ All scenes recorded from a static camera on a single pedestrian avenue in a cont
 
 ---
 
-## Requirements
+## 🔗 Live Demo
 
-* torch
-* torchvision
-* streamlit
-* opencv-python
-* matplotlib
-* ultralytics
-* pillow
-* numpy
+Try the real-time surveillance dashboard hosted on Streamlit Cloud:
+**[Click here to launch the app](https://anomalydetectioncapstone-aagua27sjxluyvjretnrul.streamlit.app)**
 
-See `requirements.txt` for full list of packages and versions.
+Features:
+
+* Upload crowd images or videos and receive density maps and overcrowding alerts (ShanghaiTech)
+* Upload surveillance footage to get anomaly labels with annotated video output (Avenue Dataset)
 
 ---
+
 
 ## Future Limitations & Directions
 
