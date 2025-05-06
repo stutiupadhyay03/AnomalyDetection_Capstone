@@ -10,10 +10,12 @@ This repository contains an interactive Streamlit app for:
 
 ## Motivation and Backgroud
 
-1. Traditional surveillance systems rely a lot on manual monitoring which at any given moment can cause a false alarm or inefficiency due to either fatigue or any other reason since it very much be cause by any human error. 
-2. In a world where home appliances have also become automated it is very much important to upgrade our surveillance systems with the changing times. 
-3. With this project we plan to proposing a solution that can deal with abnormal / anomalous situations such as overcrowding, sudden motion and unidentified objects.
-
+1. Manual Monitoring Limitations
+Traditional surveillance systems heavily depend on human operators to continuously monitor camera feeds for suspicious activity. However, this manual approach is prone to human errors such as fatigue, distraction, or delayed response times. These limitations can lead to false alarms, missed anomalies, and overall inefficiency in real-time decision-making, especially during critical events or peak activity hours.
+2. Need for Intelligent Surveillance in an Automated World
+As we advance toward an era where even household appliances are becoming smart and interconnected, it is imperative that our public safety systems evolve as well. Modern surveillance must keep pace with technological trends, adopting intelligent automation to handle large volumes of video data efficiently, minimize human dependency, and ensure prompt and accurate threat detection.
+3. Project Goal: Automated Anomaly Detection in Real-World Surveillance
+This project aims to develop an AI-powered system capable of automatically detecting and classifying anomalous events in surveillance footage. These include situations such as overcrowding in public spaces, sudden or unusual movements, and the presence of unexpected or prohibited objects (e.g., bicycles in pedestrian zones, abandoned bags). By integrating deep learning models into a real-time interface, the solution offers scalability, accuracy, and adaptability across diverse surveillance environments.
 ---
 
 ## Project Structure
