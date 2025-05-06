@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="Surveillance Dashboard", page_icon="📹")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -55,7 +55,7 @@ class CSRNet(nn.Module):
                 in_channels = v
         return nn.Sequential(*layers)
 
-# ----------------- Anomaly Classifier for Avenue -----------------
+# ----------------- Anomaly Classifier -----------------
 class AnomalyClassifier(nn.Module):
     def __init__(self, num_classes=3):
         super().__init__()
@@ -98,13 +98,13 @@ anomaly_transform = transforms.Compose([
 
 def get_alert_level(count):
     if count <= 5:
-        return "Normal", "green"
+        return "Normal", "#4dabf7"
     elif count <= 10:
-        return "Can lead to overcrowding", "gold"
+        return "Can lead to overcrowding", "#228be6"
     elif count <= 20:
-        return "Possible overcrowding", "orange"
+        return "Possible overcrowding", "#1864ab"
     else:
-        return "Overcrowding", "red"
+        return "Overcrowding", "#103d60"
 
 def infer_image(img):
     input_img = csr_transform(img).unsqueeze(0)
@@ -135,7 +135,7 @@ def annotate_video(video_file):
 
     LABEL2IDX = {"normal": 0, "unusual action": 1, "abnormal object": 2}
     IDX2LABEL = {v: k for k, v in LABEL2IDX.items()}
-    COLORS = {'normal': (0, 200, 0), 'unusual action': (255, 140, 0), 'abnormal object': (255, 0, 0)}
+    COLORS = {'normal': (50, 150, 255), 'unusual action': (0, 100, 255), 'abnormal object': (0, 0, 139)}
 
     while True:
         ret, frame = cap.read()
@@ -162,12 +162,23 @@ def annotate_video(video_file):
     return out_path
 
 # ----------------- Streamlit UI -----------------
-st.title("Surveillance Analysis Dashboard")
+st.markdown("""
+<style>
+    .css-1d391kg, .st-emotion-cache-18ni7ap {
+        background-color: #e7f5ff;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-tabs = st.tabs(["ShanghaiTech", "Avenue"])
+st.title("Real-Time Anomaly Detection & Crowd Monitoring")
+st.markdown("Built for the Avenue and ShanghaiTech datasets. Upload your video or image and analyze instantly.")
+
+with st.sidebar:
+    st.markdown("## Select a Module")
+    selected_tab = st.radio("Choose a tab:", ["ShanghaiTech Crowd Monitoring", "Avenue Anomaly Detection"])
 
 # ShanghaiTech Tab
-with tabs[0]:
+if selected_tab == "ShanghaiTech Crowd Monitoring":
     st.subheader("Crowd Monitoring")
     mode = st.radio("Select Input Type", ["Image", "Video"], key="shang_mode")
 
@@ -184,16 +195,15 @@ with tabs[0]:
 
             alert_text, alert_color = get_alert_level(pred_count)
 
-            fig, axs = plt.subplots(1, 2, figsize=(10, 4))
-            axs[0].imshow(img)
-            axs[0].set_title(f"Alert: {alert_text}", color=alert_color)
-            axs[0].axis("off")
-
-            axs[1].imshow(density_map, cmap="jet")
-            axs[1].set_title(f"Predicted Density\nCount: {int(pred_count)}")
-            axs[1].axis("off")
-
-            st.pyplot(fig)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"### Alert: <span style='color:{alert_color}'>{alert_text}</span>", unsafe_allow_html=True)
+                st.image(img, caption=f"Crowd Count: {int(pred_count)}", use_column_width=True)
+            with col2:
+                fig, ax = plt.subplots()
+                ax.imshow(density_map, cmap="jet")
+                ax.axis("off")
+                st.pyplot(fig)
 
     elif mode == "Video":
         video_file = st.file_uploader("Upload a video (MP4/AVI)", type=["mp4", "avi"], key="shang_video")
@@ -232,7 +242,7 @@ with tabs[0]:
             cap.release()
 
 # Avenue Tab
-with tabs[1]:
+elif selected_tab == "Avenue Anomaly Detection":
     st.subheader("Anomaly Detection")
 
     video_file = st.file_uploader("Upload a surveillance video (MP4/AVI)", type=["mp4", "avi"], key="avenue_video")
@@ -247,4 +257,3 @@ with tabs[1]:
         with open(annotated_video_path, "rb") as f:
             st.download_button("Download Annotated Video", f, file_name="anomaly_labeled_avenue.mp4")
         st.video(annotated_video_path)
-
