@@ -228,8 +228,6 @@ Features:
 
 ---
 
-Here's a well-structured and professional version of the **References** section for your `README.md`, including all six sources you listed, properly formatted:
-
 ---
 
 ## References
