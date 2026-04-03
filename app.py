@@ -1,259 +1,260 @@
+"""
+Real-Time Anomaly Detection & Crowd Monitoring — Streamlit dashboard.
+
+Entry point: `streamlit run app.py`
+
+This file is intentionally a thin UI layer.  All model loading and inference
+logic lives in the `src/` package so it can be tested and reused independently.
+"""
+
+# st.set_page_config must be the very first Streamlit call.
 import streamlit as st
-st.set_page_config(layout="wide", page_title="Surveillance Dashboard", page_icon="📹")
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import cv2
-import numpy as np
-import tempfile
-from torchvision import transforms, models
-from PIL import Image
-from ultralytics import YOLO
-import matplotlib.pyplot as plt
+
+st.set_page_config(
+    layout="wide",
+    page_title="Surveillance Dashboard",
+    page_icon="📹",
+)
+
+# ---------------------------------------------------------------------------
+# Environment & logging — configure before heavy imports
+# ---------------------------------------------------------------------------
+import logging
 import os
 import warnings
 
-# Suppress OpenBLAS and threading warnings
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
+from src.config import THREAD_ENV_VARS
+from src.utils import setup_logging
+
+for _k, _v in THREAD_ENV_VARS.items():
+    os.environ.setdefault(_k, _v)
+
 warnings.filterwarnings("ignore")
+setup_logging(logging.INFO)
+logger = logging.getLogger(__name__)
 
-# ----------------- CSRNet Model Definition -----------------
-class CSRNet(nn.Module):
-    def __init__(self):
-        super(CSRNet, self).__init__()
-        self.frontend = self.make_layers([64, 64, 'M', 128, 128, 'M',
-                                          256, 256, 256, 'M', 512, 512, 512])
-        self.backend = nn.Sequential(
-            nn.Conv2d(512, 256, kernel_size=3, padding=2, dilation=2),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 128, kernel_size=3, padding=2, dilation=2),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 64, kernel_size=3, padding=2, dilation=2),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 1, kernel_size=1)
-        )
+# ---------------------------------------------------------------------------
+# Application imports
+# ---------------------------------------------------------------------------
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
 
-    def forward(self, x):
-        x = self.frontend(x)
-        x = self.backend(x)
-        return x
+from src.inference import (
+    annotate_video,
+    get_alert_level,
+    infer_crowd_image,
+    iter_crowd_video_frames,
+    load_models,
+)
+from src.utils import temp_video_file, validate_upload
 
-    def make_layers(self, cfg, in_channels=3, dilation=False):
-        layers = []
-        d_rate = 2 if dilation else 1
-        for v in cfg:
-            if v == 'M':
-                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-            else:
-                conv2d = nn.Conv2d(in_channels, v, kernel_size=3,
-                                   padding=d_rate, dilation=d_rate)
-                layers += [conv2d, nn.ReLU(inplace=True)]
-                in_channels = v
-        return nn.Sequential(*layers)
+matplotlib.use("Agg")   # headless backend — safe for cloud deployments
 
-# ----------------- Anomaly Classifier -----------------
-class AnomalyClassifier(nn.Module):
-    def __init__(self, num_classes=3):
-        super().__init__()
-        self.base = models.resnet34(weights="IMAGENET1K_V1")
-        self.base.fc = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(self.base.fc.in_features, num_classes)
-        )
+# ---------------------------------------------------------------------------
+# Load models (cached across reruns)
+# ---------------------------------------------------------------------------
+try:
+    csrnet_model, anomaly_model, yolo_model = load_models()
+    _models_ready = True
+except FileNotFoundError as exc:
+    st.error(f"**Model files missing.** {exc}")
+    logger.error("Model loading failed: %s", exc)
+    _models_ready = False
+except Exception as exc:
+    st.error(f"**Unexpected error loading models:** {exc}")
+    logger.exception("Unexpected model loading error")
+    _models_ready = False
 
-    def forward(self, x):
-        return self.base(x)
+# ---------------------------------------------------------------------------
+# Shared styles
+# ---------------------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] { background-color: #e7f5ff; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ----------------- Load Models -----------------
-@st.cache_resource
-def load_models():
-    csrnet_model = CSRNet()
-    state_dict = torch.load("notebooks/csrnet_shanghai.pt", map_location="cpu")
-    csrnet_model.load_state_dict(state_dict)
-    csrnet_model.eval()
-
-    anomaly_model = AnomalyClassifier(num_classes=3)
-    anomaly_model.load_state_dict(torch.load("notebooks/final_op_avenue_model.pt", map_location="cpu"))
-    anomaly_model.eval()
-
-    yolo_model = YOLO("notebooks/yolov8m.pt")
-    return csrnet_model, anomaly_model, yolo_model
-
-csrnet_model, anomaly_model, yolo_model = load_models()
-
-csr_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
-])
-
-anomaly_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor()
-])
-
-def get_alert_level(count):
-    if count <= 5:
-        return "Normal", "#4dabf7"
-    elif count <= 10:
-        return "Can lead to overcrowding", "#228be6"
-    elif count <= 20:
-        return "Possible overcrowding", "#1864ab"
-    else:
-        return "Overcrowding", "#103d60"
-
-def infer_image(img):
-    input_img = csr_transform(img).unsqueeze(0)
-    with torch.no_grad():
-        output = csrnet_model(input_img)
-    density_map = output.squeeze(0).squeeze(0).cpu().numpy()
-    count = max(0, density_map.sum())
-    return density_map, count
-
-def infer_yolo_fallback(img):
-    results = yolo_model(img)
-    detections = results[0].boxes.cls.tolist()
-    count = detections.count(0)
-    return count
-
-def annotate_video(video_file):
-    tfile = tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(video_file.read())
-    video_path = tfile.name
-
-    cap = cv2.VideoCapture(video_path)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    out_path = os.path.join(tempfile.gettempdir(), "annotated_video.mp4")
-    out_writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
-
-    LABEL2IDX = {"normal": 0, "unusual action": 1, "abnormal object": 2}
-    IDX2LABEL = {v: k for k, v in LABEL2IDX.items()}
-    COLORS = {'normal': (50, 150, 255), 'unusual action': (0, 100, 255), 'abnormal object': (0, 0, 139)}
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert("RGB")
-        input_tensor = anomaly_transform(pil_img).unsqueeze(0)
-
-        with torch.no_grad():
-            logits = anomaly_model(input_tensor)
-            probs = F.softmax(logits, dim=1).cpu().numpy().flatten()
-            pred_idx = probs.argmax()
-            confidence = probs[pred_idx]
-            label = IDX2LABEL[pred_idx]
-            text = f"{label} ({confidence:.2f})"
-
-        color = COLORS[label]
-        cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
-        out_writer.write(frame)
-
-    cap.release()
-    out_writer.release()
-    return out_path
-
-# ----------------- Streamlit UI -----------------
-st.markdown("""
-<style>
-    .css-1d391kg, .st-emotion-cache-18ni7ap {
-        background-color: #e7f5ff;
-    }
-</style>
-""", unsafe_allow_html=True)
-
+# ---------------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------------
 st.title("Real-Time Anomaly Detection & Crowd Monitoring")
-st.markdown("Built for the Avenue and ShanghaiTech datasets. Upload your video or image and analyze instantly.")
+st.markdown(
+    "Powered by **CSRNet** (crowd density) and **ResNet-34** (anomaly classification). "
+    "Upload a video or image to analyse instantly."
+)
 
+if not _models_ready:
+    st.stop()
+
+# ---------------------------------------------------------------------------
+# Sidebar navigation
+# ---------------------------------------------------------------------------
 with st.sidebar:
     st.markdown("## Select a Module")
-    selected_tab = st.radio("Choose a tab:", ["ShanghaiTech Crowd Monitoring", "Avenue Anomaly Detection"])
+    selected_tab = st.radio(
+        "Choose a tab:",
+        ["ShanghaiTech Crowd Monitoring", "Avenue Anomaly Detection"],
+    )
 
-# ShanghaiTech Tab
+# ===========================================================================
+# Module 1 — ShanghaiTech Crowd Monitoring
+# ===========================================================================
 if selected_tab == "ShanghaiTech Crowd Monitoring":
     st.subheader("Crowd Monitoring")
     mode = st.radio("Select Input Type", ["Image", "Video"], key="shang_mode")
 
+    # -----------------------------------------------------------------------
+    # Image mode
+    # -----------------------------------------------------------------------
     if mode == "Image":
-        image_file = st.file_uploader("Upload a crowd image (JPG/PNG)", type=["jpg", "jpeg", "png"], key="shang_image")
+        image_file = st.file_uploader(
+            "Upload a crowd image (JPG / PNG)",
+            type=["jpg", "jpeg", "png"],
+            key="shang_image",
+        )
 
         if image_file is not None:
-            img = Image.open(image_file).convert("RGB")
-            st.image(img, caption="Uploaded Image", use_column_width=True)
+            if not validate_upload(image_file):
+                st.stop()
 
-            density_map, pred_count = infer_image(img)
-            if pred_count < 1:
-                pred_count = infer_yolo_fallback(np.array(img))
+            try:
+                img = Image.open(image_file).convert("RGB")
+            except Exception as exc:
+                st.error(f"Cannot read image: {exc}")
+                st.stop()
+
+            st.image(img, caption="Uploaded image", use_container_width=True)
+
+            with st.spinner("Running crowd density estimation…"):
+                try:
+                    density_map, pred_count = infer_crowd_image(
+                        img, csrnet_model, yolo_model
+                    )
+                except Exception as exc:
+                    st.error(f"Inference failed: {exc}")
+                    logger.exception("CSRNet inference error")
+                    st.stop()
 
             alert_text, alert_color = get_alert_level(pred_count)
 
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"### Alert: <span style='color:{alert_color}'>{alert_text}</span>", unsafe_allow_html=True)
-                st.image(img, caption=f"Crowd Count: {int(pred_count)}", use_column_width=True)
+                st.markdown(
+                    f"### Alert: "
+                    f"<span style='color:{alert_color}'>{alert_text}</span>",
+                    unsafe_allow_html=True,
+                )
+                st.image(
+                    img,
+                    caption=f"Estimated crowd count: {int(pred_count)}",
+                    use_container_width=True,
+                )
             with col2:
                 fig, ax = plt.subplots()
                 ax.imshow(density_map, cmap="jet")
+                ax.set_title("Density Map")
                 ax.axis("off")
                 st.pyplot(fig)
+                plt.close(fig)
 
+    # -----------------------------------------------------------------------
+    # Video mode
+    # -----------------------------------------------------------------------
     elif mode == "Video":
-        video_file = st.file_uploader("Upload a video (MP4/AVI)", type=["mp4", "avi"], key="shang_video")
+        video_file = st.file_uploader(
+            "Upload a video (MP4 / AVI)",
+            type=["mp4", "avi"],
+            key="shang_video",
+        )
+
         if video_file is not None:
-            tfile = tempfile.NamedTemporaryFile(delete=False)
-            tfile.write(video_file.read())
+            if not validate_upload(video_file):
+                st.stop()
 
-            cap = cv2.VideoCapture(tfile.name)
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            stframe = st.empty()
+            frame_placeholder = st.empty()
+            progress = st.progress(0.0, text="Processing frames…")
 
-            for _ in range(min(frame_count, 100)):
-                ret, frame = cap.read()
-                if not ret:
-                    break
+            try:
+                with temp_video_file(video_file, suffix=".mp4") as tmp_path:
+                    frames = list(iter_crowd_video_frames(
+                        tmp_path, csrnet_model, yolo_model
+                    ))
 
-                rgb_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                pil_img = Image.fromarray(rgb_img)
+                total = len(frames)
+                for idx, (rgb, density_map, count, alert_text, alert_color) in enumerate(frames):
+                    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
 
-                density_map, pred_count = infer_image(pil_img)
-                if pred_count < 1:
-                    pred_count = infer_yolo_fallback(rgb_img)
+                    axs[0].imshow(rgb)
+                    axs[0].set_title(f"Alert: {alert_text}", color=alert_color, fontsize=11)
+                    axs[0].axis("off")
 
-                alert_text, alert_color = get_alert_level(pred_count)
+                    axs[1].imshow(density_map, cmap="jet")
+                    axs[1].set_title(f"Density Map  |  Count: {int(count)}", fontsize=11)
+                    axs[1].axis("off")
 
-                fig, axs = plt.subplots(1, 2, figsize=(10, 4))
-                axs[0].imshow(rgb_img)
-                axs[0].set_title(f"Alert: {alert_text}", color=alert_color)
-                axs[0].axis("off")
+                    frame_placeholder.pyplot(fig)
+                    plt.close(fig)
+                    progress.progress((idx + 1) / total)
 
-                axs[1].imshow(density_map, cmap="jet")
-                axs[1].set_title(f"Predicted Density\nCount: {int(pred_count)}")
-                axs[1].axis("off")
+                progress.empty()
 
-                stframe.pyplot(fig)
-            cap.release()
+            except Exception as exc:
+                st.error(f"Video processing failed: {exc}")
+                logger.exception("Crowd video processing error")
 
-# Avenue Tab
+# ===========================================================================
+# Module 2 — Avenue Anomaly Detection
+# ===========================================================================
 elif selected_tab == "Avenue Anomaly Detection":
     st.subheader("Anomaly Detection")
 
-    video_file = st.file_uploader("Upload a surveillance video (MP4/AVI)", type=["mp4", "avi"], key="avenue_video")
+    video_file = st.file_uploader(
+        "Upload a surveillance video (MP4 / AVI)",
+        type=["mp4", "avi"],
+        key="avenue_video",
+    )
 
     if video_file is not None:
+        if not validate_upload(video_file):
+            st.stop()
+
         st.video(video_file)
-        st.write("Processing video and generating results...")
+        st.write("Annotating video — this may take a moment…")
 
-        annotated_video_path = annotate_video(video_file)
+        progress = st.progress(0.0, text="Classifying frames…")
+        annotated_path = None
 
-        st.success("Annotated video ready:")
-        with open(annotated_video_path, "rb") as f:
-            st.download_button("Download Annotated Video", f, file_name="anomaly_labeled_avenue.mp4")
-        st.video(annotated_video_path)
+        try:
+            with temp_video_file(video_file, suffix=".mp4") as tmp_path:
+                annotated_path = annotate_video(
+                    tmp_path,
+                    anomaly_model,
+                    progress_bar=progress,
+                )
+        except Exception as exc:
+            st.error(f"Annotation failed: {exc}")
+            logger.exception("Avenue annotation error")
+
+        if annotated_path and annotated_path.exists():
+            progress.empty()
+            st.success("Annotated video ready.")
+
+            with open(annotated_path, "rb") as fh:
+                st.download_button(
+                    label="Download Annotated Video",
+                    data=fh,
+                    file_name="anomaly_labeled_avenue.mp4",
+                    mime="video/mp4",
+                )
+
+            st.video(str(annotated_path))
+            # Clean up output file after it has been served
+            try:
+                os.unlink(annotated_path)
+            except OSError:
+                logger.warning("Could not delete output file: %s", annotated_path)
