@@ -1,271 +1,154 @@
-
 # Real-Time Anomaly Detection and Crowd Monitoring
 
-This repository contains an interactive Streamlit app for:
+An AI-powered surveillance system combining **YOLOv8**, **ResNet18**, and **CSRNet** to detect anomalous behavior and monitor crowd density in real time. Built as a UMBC DATA606 Capstone Project and deployed as an interactive Streamlit application.
 
-1. **Avenue Dataset** – Person-centric anomaly classification using ResNet18 and YOLOv8.
-2. **ShanghaiTech Dataset** – Crowd density estimation using CSRNet with YOLOv8 fallback logic for robust detection.
+🔗 **[Live Demo — Launch the App](https://anomalydetectioncapstone-aagua27sjxluyvjretnrul.streamlit.app)**
 
 ---
 
-## Motivation and Backgroud
+## Performance Highlights
 
-1. Manual Monitoring Limitations
-Traditional surveillance systems heavily depend on human operators to continuously monitor camera feeds for suspicious activity. However, this manual approach is prone to human errors such as fatigue, distraction, or delayed response times. These limitations can lead to false alarms, missed anomalies, and overall inefficiency in real-time decision-making, especially during critical events or peak activity hours.
-2. Need for Intelligent Surveillance in an Automated World
-As we advance toward an era where even household appliances are becoming smart and interconnected, it is imperative that our public safety systems evolve as well. Modern surveillance must keep pace with technological trends, adopting intelligent automation to handle large volumes of video data efficiently, minimize human dependency, and ensure prompt and accurate threat detection.
-3. Project Goal: Automated Anomaly Detection in Real-World Surveillance
-This project aims to develop an AI-powered system capable of automatically detecting and classifying anomalous events in surveillance footage. These include situations such as overcrowding in public spaces, sudden or unusual movements, and the presence of unexpected or prohibited objects (e.g., bicycles in pedestrian zones, abandoned bags). By integrating deep learning models into a real-time interface, the solution offers scalability, accuracy, and adaptability across diverse surveillance environments.
+| Dataset | Model | Metric | Score |
+|---|---|---|---|
+| ShanghaiTech Part A | CSRNet | MAE | 207.91 |
+| ShanghaiTech Part A | CSRNet | RMSE | 317.36 |
+| ShanghaiTech Part B | CSRNet | MAE | **31.18** |
+| ShanghaiTech Part B | CSRNet | RMSE | 66.59 |
+| Avenue Dataset | YOLOv8 + ResNet18 | Loss (original) | 92.17 |
+| Avenue Dataset | YOLOv8 + ResNet18 | Loss (improved) | **68.76** |
+
+---
+
+## What It Does
+
+The system addresses two core surveillance challenges:
+
+1. **Anomaly Detection (Avenue Dataset)** — Classifies unusual behavior in pedestrian surveillance footage using YOLOv8 for object detection and a fine-tuned ResNet18 classifier. Detects running, throwing, abnormal objects (bikes, bags, carts), and unusual movement directions.
+
+2. **Crowd Density Estimation (ShanghaiTech Dataset)** — Generates density maps and estimates head counts using CSRNet with a YOLOv8 fallback for robust detection. Triggers overcrowding alerts when count exceeds 20.
+
+---
+
+## Motivation
+
+Traditional surveillance depends on human operators who are prone to fatigue, distraction, and delayed response. As environments grow more complex, automated AI-driven detection becomes essential for scalable, accurate, real-time monitoring. This project integrates deep learning models into a production-ready Streamlit interface designed for practical deployment.
+
 ---
 
 ## Project Structure
 
 ```
 root/
-│
 ├── app.py                               # Streamlit dashboard combining both modules
-├── notebooks/                           # Jupyter notebooks for each dataset
+├── notebooks/
 │   ├── Avenue_Anomaly_Detection.ipynb   # YOLOv8 + ResNet18 for anomaly detection
-│   ├── ShanghaiTech_Overcrowding.ipynb  # CSRNet-based crowd estimation
-│
-├── assets/                              # Visual diagrams for architecture explanation
-│   ├── avenue_pipeline.png              # Anomaly detection pipeline (Avenue)
-│   └── csrnet_pipeline.png              # Crowd monitoring pipeline (ShanghaiTech)
-│
-├── references/                          # Supporting research papers in PDF format
-│   ├── *.pdf                            # Cited academic and technical papers
-│
-├── requirements.txt                     # All Python dependencies for local/app deployment
-├── README.md                            # Project overview and instructions
-
+│   └── ShanghaiTech_Overcrowding.ipynb  # CSRNet-based crowd density estimation
+├── assets/
+│   ├── avenue_pipeline.png              # Anomaly detection architecture diagram
+│   └── csrnet_pipeline.png              # Crowd monitoring architecture diagram
+├── references/                          # Supporting research papers (PDF)
+├── requirements.txt
+└── README.md
 ```
+
 ---
 
-## How to Run
+## Architecture
 
-1. **Clone the repository**
+### Avenue Dataset — Anomaly Detection (YOLOv8 + ResNet18)
+
+![Avenue Pipeline](assets/diagram-avenue.png)
+
+- **Object Detection:** YOLOv8 detects people and objects per frame
+- **Classification:** Fine-tuned ResNet18 classifies each frame as Normal / Unusual Action / Abnormal Object
+- **Input:** Video frames extracted from `.avi` files
+- **Output:** Annotated video with bounding boxes and class labels
+- **Labels:** Normal, Unusual Action, Abnormal Object
+
+### ShanghaiTech — Crowd Monitoring (CSRNet)
+
+![CSRNet Pipeline](assets/diagram-shanghaitech.png)
+
+- **Model:** CSRNet with VGG16 frontend and dilated convolutional backend
+- **Input:** `.jpg` images with annotated `.mat` ground truth (head coordinates)
+- **Output:** Density map + total head count estimate
+- **Alert:** Overcrowding triggered when count exceeds 20
+
+---
+
+## Datasets
+
+### Avenue Dataset
+- 16 training videos (normal behavior only), 21 test videos (with anomalies)
+- ~15,328 test frames at 640x360 resolution, ~25 FPS
+- Static camera on a single pedestrian avenue
+- Anomalies: running, throwing objects, abnormal directions, bikes, bags, carts
+
+### ShanghaiTech Dataset
+- **Part A** (dense crowds): 300 train / 182 test annotated images
+- **Part B** (sparse crowds): 400 train / 316 test annotated images
+- Ground truth: `.mat` files with head coordinates converted to Gaussian density maps
+
+---
+
+## Setup
 
 ```bash
-git clone https://github.com/your-username/DATA606_Capstone_AnomalyDetection.git
-cd DATA606_Capstone_AnomalyDetection
+git clone https://github.com/stutiupadhyay03/AnomalyDetection_Capstone.git
+cd AnomalyDetection_Capstone
 ```
 
-2. **(Optional) Create and activate a virtual environment**
-
 ```bash
+# Optional: create a virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
-
-3. **Install all dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Download required model files**
-
-* `yolov8m.pt` → from Ultralytics
-* `csrnet_shanghai.pt` → pretrained CSRNet model
-* `final_op_avenue_model.pt` → trained ResNet18 classifier for Avenue
-
-> Place these files in the **root** directory of the project.
-
-5. **Run the app**
+Download the required model files and place them in the root directory:
+- `yolov8m.pt` — from [Ultralytics](https://github.com/ultralytics/ultralytics)
+- `csrnet_shanghai.pt` — pretrained CSRNet model
+- `final_op_avenue_model.pt` — fine-tuned ResNet18 classifier for Avenue
 
 ```bash
 streamlit run app.py
+# Open: http://localhost:8501
 ```
 
-6. **View in browser**
-
-Go to: `http://localhost:8501`
-
 ---
 
-## Datasets Used
+## Future Directions
 
-### 1. ShanghaiTech Dataset
-
-**Purpose**
-Originally designed for crowd counting and density estimation. Often adapted for anomaly detection and overcrowding alerts in surveillance.
-
-**Structure**
-
-* Part A – Dense crowds (e.g., Shanghai city streets)
-
-  * Train: 300 annotated images
-  * Test: 182 images
-* Part B – Sparse crowds (e.g., parks)
-
-  * Train: 400 annotated images
-  * Test: 316 images
-
-**Annotations**
-Ground truth stored in `.mat` files containing head coordinates, converted to Gaussian density maps.
-
----
-
-### 2. Avenue Dataset
-
-**Purpose**
-Designed for video anomaly detection in surveillance scenarios. Focuses on identifying unusual behaviors like running, throwing, loitering, or carrying strange objects.
-
-**Structure**
-
-* 16 training videos (normal behavior only)
-* 21 test videos (contains anomalies)
-* Resolution: 640×360 at \~25 FPS
-* \~15,328 test frames
-
-**Visual Context**
-All scenes recorded from a static camera on a single pedestrian avenue in a controlled indoor/outdoor hybrid setting.
-
-**Anomalies Include**
-
-* People running
-* Moving in abnormal directions
-* Throwing items
-* Carrying abnormal objects (bikes, bags, carts, etc.)
-
----
-
-## Model Highlights
-
-### ShanghaiTech (CSRNet-Based Crowd Counting)
-
-* **Model:** CSRNet with VGG16 frontend and dilated convolutional backend
-* **Task:** Generate density map and predict head count in static images
-* **Input:** `.jpg` images
-* **Ground Truth:** Annotated `.mat` files with head positions
-* **Output:** Density map + total count
-* **Overcrowding Alert:** Triggered if count exceeds 20
-* **Metrics:**
-
-  * Part A → MAE: 207.91, RMSE: 317.36
-  * Part B → MAE: 31.18, RMSE: 66.59
-
----
-
-### Avenue Dataset (YOLOv8 + ResNet18-Based Anomaly Classification)
-
-* **Object Detection:** YOLOv8 to detect people and objects
-* **Classification:** ResNet18 frame classifier fine-tuned to classify anomalies
-* **Input:** Video frames extracted from `.avi` files
-* **Labels:** Normal / Unusual Action / Abnormal Object
-* **Visualization:** Bounding boxes + class label overlay
-* **Performance:**
-
-  * Original Loss: 92.17
-  * Improved Loss: 68.76
-
----
-
-## Architecture Overview
-
-### ShanghaiTech Crowd Monitoring (CSRNet)
-
-![CSRNet Pipeline](assets/diagram-shanghaitech.png)
-
-### Avenue Anomaly Detection (YOLOv8 + ResNet18)
-
-![Avenue Pipeline](assets/diagram-avenue.png)
-
----
-
-## 🔗 Live Demo
-
-Try the real-time surveillance dashboard hosted on Streamlit Cloud:
-**[Click here to launch the app](https://anomalydetectioncapstone-aagua27sjxluyvjretnrul.streamlit.app)**
-
-Features:
-
-* Upload crowd images or videos and receive density maps and overcrowding alerts (ShanghaiTech)
-* Upload surveillance footage to get anomaly labels with annotated video output (Avenue Dataset)
-
----
-
-
-## Future Limitations & Directions
-
-### 1. Real-Time Video Stream Integration
-
-* Integrate CCTV or webcam feeds using OpenCV/RTSP for active surveillance.
-* Requires reliable edge devices and live networking, currently out of scope.
-
-### 2. Add Temporal Awareness to ResNet
-
-* Future versions could integrate LSTM/GRU/Transformer after ResNet for motion context.
-* This adds complexity and requires GPU resources, not suitable for current CPU-only real-time constraints.
-
-### 3. Extend Anomaly Classes
-
-* Expand classification beyond three current labels to include:
-
-  * Fighting/aggression
-  * Climbing over barriers
-  * Tailgating
-  * Bicycles in pedestrian zones
-  * Unauthorized group gatherings
-* Requires extensive relabeling and retraining with balanced datasets.
-
-### 4. Alert Notification System
-
-* Enable email, SMS, or dashboard-based alerting for anomalies and overcrowding.
-* Would require backend infrastructure like Twilio, SendGrid, or cloud APIs.
-
-### 5. Edge and Cloud Deployment
-
-* Use Jetson devices for real-time edge inference.
-* Deploy on AWS, Azure, or GCP for scalable monitoring, APIs, and dashboards.
+- **Live stream integration** — CCTV/webcam feeds via OpenCV/RTSP
+- **Temporal modeling** — LSTM/GRU/Transformer after ResNet for motion context across frames
+- **Expanded anomaly classes** — fighting, climbing, tailgating, unauthorized gatherings
+- **Alert system** — email/SMS/dashboard notifications via Twilio or SendGrid
+- **Edge deployment** — Jetson devices for real-time inference; AWS/Azure/GCP for scalable cloud deployment
 
 ---
 
 ## Developed By
 
-* Stuti Upadhyay — UMBC | DATA 606 Capstone Project
-* Lakshmi Tejaswini Chandra Pampana — UMBC | DATA 606 Capstone Project
+- **Stuti Upadhyay** — UMBC | DATA606 Capstone | [github.com/stutiupadhyay03](https://github.com/stutiupadhyay03)
+- **Lakshmi Tejaswini Chandra Pampana** — UMBC | DATA606 Capstone
 
 ---
+
+## Stack
+
+`PyTorch` · `YOLOv8 (Ultralytics)` · `ResNet18` · `CSRNet` · `OpenCV` · `Streamlit` · `Python`
 
 ---
 
 ## References
 
-
-1. **A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection**
-   Nomica Choudhry, Jemal Abawajy, Shamsul Huda, and Imran Rao
-   Faculty of Science, Engineering and Built Environment, Deakin University, Australia
-   Department of Computer Science, NUML, Pakistan
-   Blue Brackets Technologies, Islamabad, Pakistan
-   *Corresponding author:* [choudhryn@deakin.edu.au](mailto:choudhryn@deakin.edu.au)
-
-2. **Anomaly Detection in Surveillance Videos Based on H265 and Deep Learning**
-   Zainab K. Abbas and Ayad A. Al-Ani
-   Department of Information and Communication Engineering, Al-Nahrain University, Baghdad, Iraq
-   *Published in:* International Journal of Advanced Technology and Engineering Exploration, Vol 9(92), 2022
-   *DOI:* 10.19101/IJATEE.2021.875907
-
-3. **Spatiotemporal Anomaly Detection Using Deep Learning for Real-Time Video Surveillance**
-   Rashmika Nawaratne, Daswin De Silva, Damminda Alahakoon, Xinghuo Yu
-   *Affiliations:* IEEE Members, Federation University Australia
-
-4. **Confidence Score: The Forgotten Dimension of Object Detection Performance Evaluation**
-   Simon Wenkel, Khaled Alhazmi, Tanel Liiv, Saud Alrshoud, Martin Simon
-   *Corresponding author:* [khazmi@kacst.edu.sa](mailto:khazmi@kacst.edu.sa)
-   *Affiliations:* Marduk Technologies, Saudi Arabia, KACST
-
-5. **Towards Better Confidence Estimation for Neural Models**
-   Vishal Thanvantri Vasudevan, Abhinav Sethy, Alireza Roshan Ghias
-   *Affiliations:* University of California, San Diego and Alexa AI, Amazon
-
-6. **Abnormal Event Detection at 150 FPS in MATLAB**
-   Cewu Lu, Jianping Shi, Jiaya Jia
-   The Chinese University of Hong Kong
-   *Emails:* {cwlu, jpshi, leojia}@cse.cuhk.edu.hk
-   
-7. **Future Frame Prediction for Anomaly Detection -- A New Baseline**
-   W. Liu and W. Luo and D. Lian and S. Gao
-   
-
----
+1. Choudhry et al. — *A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection*, Deakin University
+2. Abbas & Al-Ani — *Anomaly Detection in Surveillance Videos Based on H265 and Deep Learning*, International Journal of Advanced Technology and Engineering Exploration, 2022
+3. Nawaratne et al. — *Spatiotemporal Anomaly Detection Using Deep Learning for Real-Time Video Surveillance*, IEEE
+4. Wenkel et al. — *Confidence Score: The Forgotten Dimension of Object Detection Performance Evaluation*
+5. Vasudevan et al. — *Towards Better Confidence Estimation for Neural Models*, UC San Diego / Amazon Alexa AI
+6. Lu et al. — *Abnormal Event Detection at 150 FPS in MATLAB*, The Chinese University of Hong Kong
+7. Liu et al. — *Future Frame Prediction for Anomaly Detection — A New Baseline*
