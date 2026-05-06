@@ -41,14 +41,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from src.inference import (
-    annotate_video,
-    get_alert_level,
-    infer_crowd_image,
-    iter_crowd_video_frames,
-    load_models,
-)
-from src.utils import temp_video_file, validate_upload
+try:
+    from src.inference import (
+        annotate_video,
+        get_alert_level,
+        infer_crowd_image,
+        iter_crowd_video_frames,
+        load_models,
+    )
+    from src.utils import temp_video_file, validate_upload
+except Exception as _import_exc:
+    st.error(f"**Startup import failed:** {_import_exc}")
+    logger.exception("Import-time failure")
+    st.stop()
 
 
 def safe_file_uploader(label: str, type: list, key: str, **kwargs):
