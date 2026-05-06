@@ -322,8 +322,6 @@ Features:
 ## Stack
 
 `PyTorch` · `YOLOv8 (Ultralytics)` · `ResNet18` · `CSRNet` · `OpenCV` · `Streamlit` · `Python`
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
-
 ---
 
 ## References
@@ -350,4 +348,3 @@ Features:
 5. Vasudevan et al. — *Towards Better Confidence Estimation for Neural Models*, UC San Diego / Amazon Alexa AI
 6. Lu et al. — *Abnormal Event Detection at 150 FPS in MATLAB*, The Chinese University of Hong Kong
 7. Liu et al. — *Future Frame Prediction for Anomaly Detection — A New Baseline*
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
