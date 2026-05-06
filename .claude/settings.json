@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3 -c ':*)"
+      "Bash(python3 -c ':*)",
+      "Bash(~/anaconda3/bin/python -c \"import torch; print\\('torch:', torch.__version__\\)\")",
+      "Bash(~/anaconda3/bin/pip show:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

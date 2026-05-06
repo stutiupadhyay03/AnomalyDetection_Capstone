@@ -50,6 +50,15 @@ from src.inference import (
 )
 from src.utils import temp_video_file, validate_upload
 
+
+def safe_file_uploader(label: str, type: list, key: str, **kwargs):
+    """Wrapper around st.file_uploader that clears stale session state on type mismatch."""
+    try:
+        return st.file_uploader(label, type=type, key=key, **kwargs)
+    except st.errors.StreamlitAPIException:
+        st.session_state.pop(key, None)
+        st.rerun()
+
 matplotlib.use("Agg")   # headless backend — safe for cloud deployments
 
 # ---------------------------------------------------------------------------
@@ -112,7 +121,7 @@ if selected_tab == "ShanghaiTech Crowd Monitoring":
     # Image mode
     # -----------------------------------------------------------------------
     if mode == "Image":
-        image_file = st.file_uploader(
+        image_file = safe_file_uploader(
             "Upload a crowd image (JPG / PNG)",
             type=["jpg", "jpeg", "png"],
             key="shang_image",
@@ -166,7 +175,7 @@ if selected_tab == "ShanghaiTech Crowd Monitoring":
     # Video mode
     # -----------------------------------------------------------------------
     elif mode == "Video":
-        video_file = st.file_uploader(
+        video_file = safe_file_uploader(
             "Upload a video (MP4 / AVI)",
             type=["mp4", "avi"],
             key="shang_video",
@@ -213,7 +222,7 @@ if selected_tab == "ShanghaiTech Crowd Monitoring":
 elif selected_tab == "Avenue Anomaly Detection":
     st.subheader("Anomaly Detection")
 
-    video_file = st.file_uploader(
+    video_file = safe_file_uploader(
         "Upload a surveillance video (MP4 / AVI)",
         type=["mp4", "avi"],
         key="avenue_video",
