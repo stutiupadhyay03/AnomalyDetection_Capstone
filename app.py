@@ -36,12 +36,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Application imports
 # ---------------------------------------------------------------------------
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image
-
 try:
+    import matplotlib
+    matplotlib.use("Agg")   # must be set before pyplot is imported on headless servers
+    import matplotlib.pyplot as plt
+    from PIL import Image
     from src.inference import (
         annotate_video,
         get_alert_level,
