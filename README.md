@@ -1,6 +1,5 @@
 # Real-Time Anomaly Detection and Crowd Monitoring
 
-<<<<<<< HEAD
 An interactive Streamlit dashboard for two surveillance analytics use cases:
 
 1. **Avenue Dataset** — Frame-level anomaly classification (normal / unusual action / abnormal object) using ResNet-34 + YOLOv8.
@@ -55,7 +54,6 @@ Traditional surveillance depends on human operators who are prone to fatigue, di
 ## Project Structure
 
 ```
-<<<<<<< HEAD
 AnomalyDetection_Capstone/
 │
 ├── app.py                               # Streamlit dashboard (thin UI layer)
@@ -89,7 +87,6 @@ root/
 │   └── csrnet_pipeline.png              # Crowd monitoring architecture diagram
 ├── references/                          # Supporting research papers (PDF)
 ├── requirements.txt
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 └── README.md
 ```
 
@@ -97,7 +94,6 @@ root/
 
 ## Architecture
 
-<<<<<<< HEAD
 ### 1. Clone the repository
 =======
 ### Avenue Dataset — Anomaly Detection (YOLOv8 + ResNet18)
@@ -137,22 +133,18 @@ root/
 ---
 
 ## Setup
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 
 ```bash
 git clone https://github.com/stutiupadhyay03/AnomalyDetection_Capstone.git
 cd AnomalyDetection_Capstone
 ```
 
-<<<<<<< HEAD
 ### 2. Create and activate a virtual environment
 
 =======
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 ```bash
 # Optional: create a virtual environment
 python -m venv venv
-<<<<<<< HEAD
 source venv/bin/activate       # Windows: venv\Scripts\activate
 ```
 
@@ -162,12 +154,10 @@ source venv/bin/activate       # Windows: venv\Scripts\activate
 source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
 
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 ```bash
 pip install -r requirements.txt
 ```
 
-<<<<<<< HEAD
 ### 4. Download model files
 
 Place the following files in the `notebooks/` directory (default) or set the `MODEL_DIR` environment variable to override:
@@ -190,14 +180,12 @@ Download the required model files and place them in the root directory:
 - `yolov8m.pt` — from [Ultralytics](https://github.com/ultralytics/ultralytics)
 - `csrnet_shanghai.pt` — pretrained CSRNet model
 - `final_op_avenue_model.pt` — fine-tuned ResNet18 classifier for Avenue
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 
 ```bash
 streamlit run app.py
 # Open: http://localhost:8501
 ```
 
-<<<<<<< HEAD
 ### 6. Open in browser
 
 Navigate to `http://localhost:8501`
@@ -322,8 +310,6 @@ Features:
 ## Stack
 
 `PyTorch` · `YOLOv8 (Ultralytics)` · `ResNet18` · `CSRNet` · `OpenCV` · `Streamlit` · `Python`
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
-
 ---
 
 ## References
@@ -350,4 +336,3 @@ Features:
 5. Vasudevan et al. — *Towards Better Confidence Estimation for Neural Models*, UC San Diego / Amazon Alexa AI
 6. Lu et al. — *Abnormal Event Detection at 150 FPS in MATLAB*, The Chinese University of Hong Kong
 7. Liu et al. — *Future Frame Prediction for Anomaly Detection — A New Baseline*
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
