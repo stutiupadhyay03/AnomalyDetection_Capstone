@@ -63,8 +63,6 @@ def safe_file_uploader(label: str, type: list, key: str, **kwargs):
         st.session_state.pop(key, None)
         st.rerun()
 
-matplotlib.use("Agg")   # headless backend — safe for cloud deployments
-
 # ---------------------------------------------------------------------------
 # Load models (cached across reruns)
 # ---------------------------------------------------------------------------
