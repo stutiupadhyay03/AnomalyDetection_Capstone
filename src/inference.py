@@ -62,11 +62,13 @@ def _validate_model_paths() -> None:
 @st.cache_resource(show_spinner="Loading models…")
 def load_models() -> Tuple[Any, Any, Any]:
     """Load all three models once and cache them for the session."""
+    # Validate paths first — avoids importing torch/ultralytics (~400 MB) when
+    # model files are absent (e.g. on Streamlit Cloud without LFS / model storage).
+    _validate_model_paths()
+
     import torch
     from ultralytics import YOLO
     from src.models import AnomalyClassifier, CSRNet
-
-    _validate_model_paths()
 
     csrnet = CSRNet()
     csrnet.load_state_dict(_load_state_dict_safe(CSRNET_MODEL_PATH))
