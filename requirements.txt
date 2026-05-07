@@ -1,5 +1,5 @@
 # Core framework
-streamlit==1.45.0
+streamlit==1.44.1
 
 # Deep learning
 torch==2.2.1
