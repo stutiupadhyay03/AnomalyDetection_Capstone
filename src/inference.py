@@ -98,6 +98,20 @@ def get_alert_level(count: float) -> Tuple[str, str]:
     return ALERT_THRESHOLDS[-1][1], ALERT_THRESHOLDS[-1][2]
 
 
+_MAX_INFER_DIM = 800  # cap longest side before CSRNet to prevent OOM on large uploads
+
+
+def _resize_for_inference(img: Any) -> Any:
+    """Resize PIL image so its longest side is at most _MAX_INFER_DIM."""
+    from PIL import Image
+    w, h = img.size
+    scale = min(1.0, _MAX_INFER_DIM / max(w, h))
+    if scale < 1.0:
+        new_w, new_h = max(1, int(w * scale)), max(1, int(h * scale))
+        img = img.resize((new_w, new_h), Image.BILINEAR)
+    return img
+
+
 def infer_crowd_image(img: Any, csrnet: Any, yolo: Any) -> Tuple[Any, float]:
     """
     Run CSRNet crowd density inference on a PIL image.
@@ -107,6 +121,8 @@ def infer_crowd_image(img: Any, csrnet: Any, yolo: Any) -> Tuple[Any, float]:
     import numpy as np
     import torch
     from torchvision import transforms
+
+    img = _resize_for_inference(img)
 
     csr_transform = transforms.Compose([
         transforms.ToTensor(),
