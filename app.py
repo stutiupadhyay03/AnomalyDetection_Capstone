@@ -153,25 +153,30 @@ if selected_tab == "ShanghaiTech Crowd Monitoring":
 
             alert_text, alert_color = get_alert_level(pred_count)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(
-                    f"### Alert: "
-                    f"<span style='color:{alert_color}'>{alert_text}</span>",
-                    unsafe_allow_html=True,
-                )
-                st.image(
-                    img,
-                    caption=f"Estimated crowd count: {int(pred_count)}",
-                    use_container_width=True,
-                )
-            with col2:
-                fig, ax = plt.subplots()
-                ax.imshow(density_map, cmap="jet")
-                ax.set_title("Density Map")
-                ax.axis("off")
-                st.pyplot(fig)
-                plt.close(fig)
+            try:
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(
+                        f"### Alert: "
+                        f"<span style='color:{alert_color}'>{alert_text}</span>",
+                        unsafe_allow_html=True,
+                    )
+                    st.image(
+                        img,
+                        caption=f"Estimated crowd count: {int(pred_count)}",
+                        use_container_width=True,
+                    )
+                with col2:
+                    dm = density_map.squeeze() if density_map.ndim > 2 else density_map
+                    fig, ax = plt.subplots()
+                    ax.imshow(dm, cmap="jet")
+                    ax.set_title("Density Map")
+                    ax.axis("off")
+                    st.pyplot(fig)
+                    plt.close(fig)
+            except Exception as exc:
+                st.error(f"Display failed: {exc}")
+                logger.exception("Post-inference display error")
 
     # -----------------------------------------------------------------------
     # Video mode
