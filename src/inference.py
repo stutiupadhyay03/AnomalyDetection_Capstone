@@ -2,21 +2,15 @@
 Model loading and inference logic.
 
 All heavy computation lives here so app.py stays a thin UI layer.
+Heavy third-party libraries (torch, cv2, ultralytics) are imported lazily
+inside functions so the app can start without loading the full ML stack.
 """
 
 import logging
-import os
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
-import cv2
-import numpy as np
 import streamlit as st
-import torch
-import torch.nn.functional as F
-from PIL import Image
-from torchvision import transforms
-from ultralytics import YOLO
 
 from src.config import (
     ALERT_THRESHOLDS,
@@ -34,26 +28,9 @@ from src.config import (
     UNCERTAIN_LABEL,
     YOLO_MODEL_PATH,
 )
-from src.models import AnomalyClassifier, CSRNet
 from src.utils import unique_output_path
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Transforms
-# ---------------------------------------------------------------------------
-
-csr_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-])
-
-# Anomaly model was trained with resize + ToTensor (no additional normalisation).
-# Adding ImageNet normalisation here would misalign with training distribution.
-anomaly_transform = transforms.Compose([
-    transforms.Resize(ANOMALY_INPUT_SIZE),
-    transforms.ToTensor(),
-])
 
 
 # ---------------------------------------------------------------------------
@@ -61,14 +38,10 @@ anomaly_transform = transforms.Compose([
 # ---------------------------------------------------------------------------
 
 def _load_state_dict_safe(path: Path, map_location="cpu"):
-    """
-    Load a PyTorch state-dict with weights_only=True when the runtime
-    supports it (PyTorch >= 1.13), falling back gracefully for older builds.
-    """
+    import torch
     try:
         return torch.load(path, map_location=map_location, weights_only=True)
     except TypeError:
-        # weights_only not supported in this torch version
         logger.warning("weights_only=True unavailable; falling back for %s", path.name)
         return torch.load(path, map_location=map_location)
 
@@ -87,8 +60,12 @@ def _validate_model_paths() -> None:
 
 
 @st.cache_resource(show_spinner="Loading models…")
-def load_models() -> Tuple[CSRNet, AnomalyClassifier, YOLO]:
+def load_models() -> Tuple[Any, Any, Any]:
     """Load all three models once and cache them for the session."""
+    import torch
+    from ultralytics import YOLO
+    from src.models import AnomalyClassifier, CSRNet
+
     _validate_model_paths()
 
     csrnet = CSRNet()
@@ -116,28 +93,28 @@ def get_alert_level(count: float) -> Tuple[str, str]:
     for threshold, label, color in ALERT_THRESHOLDS:
         if count < threshold:
             return label, color
-    # Should not be reached given float("inf") sentinel, but be defensive.
     return ALERT_THRESHOLDS[-1][1], ALERT_THRESHOLDS[-1][2]
 
 
-def infer_crowd_image(
-    img: Image.Image,
-    csrnet: CSRNet,
-    yolo: YOLO,
-) -> Tuple[np.ndarray, float]:
+def infer_crowd_image(img: Any, csrnet: Any, yolo: Any) -> Tuple[Any, float]:
     """
     Run CSRNet crowd density inference on a PIL image.
 
     Falls back to YOLOv8 person-count when CSRNet output is below threshold.
-
-    Returns:
-        density_map: H×W float array (raw CSRNet output).
-        crowd_count: estimated number of people.
     """
+    import numpy as np
+    import torch
+    from torchvision import transforms
+
+    csr_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+    ])
+
     tensor = csr_transform(img).unsqueeze(0)
     with torch.no_grad():
         output = csrnet(tensor)
-    density_map: np.ndarray = output.squeeze().cpu().numpy()
+    density_map: Any = output.squeeze().cpu().numpy()
     count = float(max(0.0, density_map.sum()))
 
     if count < CSRNET_FALLBACK_THRESHOLD:
@@ -147,7 +124,7 @@ def infer_crowd_image(
     return density_map, count
 
 
-def _yolo_person_count(img_rgb: np.ndarray, yolo: YOLO) -> int:
+def _yolo_person_count(img_rgb: Any, yolo: Any) -> int:
     """Count detected persons (class 0) in an RGB image using YOLOv8."""
     results = yolo(img_rgb, verbose=False)
     classes = results[0].boxes.cls.tolist()
@@ -158,10 +135,7 @@ def _yolo_person_count(img_rgb: np.ndarray, yolo: YOLO) -> int:
 # Anomaly detection (ResNet-34)
 # ---------------------------------------------------------------------------
 
-def _classify_frame(
-    frame_bgr: np.ndarray,
-    anomaly_clf: AnomalyClassifier,
-) -> Tuple[str, float]:
+def _classify_frame(frame_bgr: Any, anomaly_clf: Any) -> Tuple[str, float]:
     """
     Classify a single BGR frame.
 
@@ -169,12 +143,23 @@ def _classify_frame(
         label: predicted class label (or UNCERTAIN_LABEL if below threshold).
         confidence: softmax confidence of the top prediction.
     """
+    import cv2
+    import torch
+    import torch.nn.functional as F
+    from PIL import Image
+    from torchvision import transforms
+
+    anomaly_transform = transforms.Compose([
+        transforms.Resize(ANOMALY_INPUT_SIZE),
+        transforms.ToTensor(),
+    ])
+
     pil = Image.fromarray(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
     tensor = anomaly_transform(pil).unsqueeze(0)
 
     with torch.no_grad():
         logits = anomaly_clf(tensor)
-        probs: np.ndarray = F.softmax(logits, dim=1).cpu().numpy().flatten()
+        probs = F.softmax(logits, dim=1).cpu().numpy().flatten()
 
     pred_idx = int(probs.argmax())
     confidence = float(probs[pred_idx])
@@ -187,16 +172,11 @@ def _classify_frame(
 
 def annotate_video(
     video_path: Path,
-    anomaly_clf: AnomalyClassifier,
+    anomaly_clf: Any,
     progress_bar=None,
 ) -> Path:
     """
     Annotate each frame of *video_path* with the predicted anomaly label.
-
-    Args:
-        video_path:   Path to the input video file.
-        anomaly_clf:  Loaded AnomalyClassifier model.
-        progress_bar: Optional Streamlit progress element.
 
     Returns:
         Path to the annotated output video (caller is responsible for cleanup).
@@ -204,6 +184,8 @@ def annotate_video(
     Raises:
         RuntimeError: if the video cannot be opened or the writer fails.
     """
+    import cv2
+
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {video_path}")
@@ -257,15 +239,14 @@ def annotate_video(
 # Crowd video streaming helper
 # ---------------------------------------------------------------------------
 
-def iter_crowd_video_frames(
-    video_path: Path,
-    csrnet: CSRNet,
-    yolo: YOLO,
-):
+def iter_crowd_video_frames(video_path: Path, csrnet: Any, yolo: Any):
     """
     Generator yielding (rgb_frame, density_map, count, alert_text, alert_color)
     for up to MAX_VIDEO_FRAMES frames of *video_path*.
     """
+    import cv2
+    from PIL import Image
+
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {video_path}")
