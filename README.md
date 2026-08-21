@@ -47,7 +47,6 @@ The system addresses two core surveillance challenges:
 ## Motivation
 
 Traditional surveillance depends on human operators who are prone to fatigue, distraction, and delayed response. As environments grow more complex, automated AI-driven detection becomes essential for scalable, accurate, real-time monitoring. This project integrates deep learning models into a production-ready Streamlit interface designed for practical deployment.
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 
 ---
 
