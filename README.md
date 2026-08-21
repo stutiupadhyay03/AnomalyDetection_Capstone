@@ -281,7 +281,7 @@ Features:
 3. **Extended anomaly classes** — Fighting, climbing, tailgating, unauthorized gatherings.
 4. **Alert notifications** — Email/SMS alerts via Twilio or SendGrid when thresholds are exceeded.
 5. **Edge deployment** — Optimize with TensorRT or ONNX for Jetson-class edge devices.
-=======
+
 ---
 
 ## Future Directions
@@ -291,16 +291,11 @@ Features:
 - **Expanded anomaly classes** — fighting, climbing, tailgating, unauthorized gatherings
 - **Alert system** — email/SMS/dashboard notifications via Twilio or SendGrid
 - **Edge deployment** — Jetson devices for real-time inference; AWS/Azure/GCP for scalable cloud deployment
->>>>>>> 94a932239310e22c27eb771bc92b03beecdf9483
 
 ---
 
 ## Developed By
 
-<<<<<<< HEAD
-- **Stuti Upadhyay** — UMBC | DATA 606 Capstone
-- **Lakshmi Tejaswini Chandra Pampana** — UMBC | DATA 606 Capstone
-=======
 - **Stuti Upadhyay** — UMBC | DATA606 Capstone | [github.com/stutiupadhyay03](https://github.com/stutiupadhyay03)
 - **Lakshmi Tejaswini Chandra Pampana** — UMBC | DATA606 Capstone
 
@@ -313,7 +308,6 @@ Features:
 
 ## References
 
-<<<<<<< HEAD
 1. Choudhry, N., Abawajy, J., Huda, S., & Rao, I. *A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection.* Deakin University.
 
 2. Abbas, Z. K., & Al-Ani, A. A. *Anomaly Detection in Surveillance Videos Based on H265 and Deep Learning.* International Journal of Advanced Technology and Engineering Exploration, Vol 9(92), 2022. DOI: 10.19101/IJATEE.2021.875907
@@ -327,11 +321,3 @@ Features:
 6. Lu, C., Shi, J., & Jia, J. *Abnormal Event Detection at 150 FPS in MATLAB.* The Chinese University of Hong Kong. ICCV 2013.
 
 7. Liu, W., Luo, W., Lian, D., & Gao, S. *Future Frame Prediction for Anomaly Detection — A New Baseline.* CVPR 2018.
-=======
-1. Choudhry et al. — *A Comprehensive Survey of Machine Learning Methods for Surveillance Videos Anomaly Detection*, Deakin University
-2. Abbas & Al-Ani — *Anomaly Detection in Surveillance Videos Based on H265 and Deep Learning*, International Journal of Advanced Technology and Engineering Exploration, 2022
-3. Nawaratne et al. — *Spatiotemporal Anomaly Detection Using Deep Learning for Real-Time Video Surveillance*, IEEE
-4. Wenkel et al. — *Confidence Score: The Forgotten Dimension of Object Detection Performance Evaluation*
-5. Vasudevan et al. — *Towards Better Confidence Estimation for Neural Models*, UC San Diego / Amazon Alexa AI
-6. Lu et al. — *Abnormal Event Detection at 150 FPS in MATLAB*, The Chinese University of Hong Kong
-7. Liu et al. — *Future Frame Prediction for Anomaly Detection — A New Baseline*
